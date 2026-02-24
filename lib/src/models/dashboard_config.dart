@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class DashboardConfig {
   final Color headerBgColor;
-  final Color accentColor;
+  final Color searchBgColor;
   final TextStyle? headerTextStyle;
   final TextStyle? cellTextStyle;
   final List<String>? searchableFields;
@@ -13,7 +13,7 @@ class DashboardConfig {
 
   const DashboardConfig({
     this.headerBgColor = Colors.blue,
-    this.accentColor = Colors.grey,
+    this.searchBgColor = Colors.grey,
     this.headerTextStyle,
     this.cellTextStyle,
     this.searchableFields,

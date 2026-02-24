@@ -19,7 +19,7 @@ class DashboardSearch extends StatelessWidget {
         "Search in ${config.searchableFields?.join(", ") ?? "table"}",
         prefixIcon: Icon(Icons.search, color: config.headerBgColor),
         filled: true,
-        fillColor: config.accentColor.withOpacity(0.1),
+        fillColor: config.searchBgColor.withOpacity(0.1),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
