@@ -32,7 +32,7 @@ dependencies:
     sdk: flutter
 ```
 ## Usage
-```flutter
+```dart
 import 'package:flutter/material.dart';
 import 'dynamic_dashboard/dynamic_dashboard.dart';
 
