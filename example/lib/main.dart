@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:dynamic_dashboard_library/dynamic_dashboard_library.dart';
+import 'package:cgc_dynamic_search/dynamic_dashboard_library.dart';
 
 void main() {
   runApp(const MyApp());
