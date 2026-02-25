@@ -76,17 +76,17 @@ DynamicDashboard(
 
 ## Configuration Options
 
-| Property           | Type | Default | Description |
-|--------------------|------|----------|------------|
+| Property           | Type | Default       | Description |
+|--------------------|------|---------------|------------|
 |  `headerBgColor`   | `Color` | `Colors.blue` | Header highlight color |
-| `searchBgColor`    | `Color` | `Colors.blue` | Search field background color |
-| `headerTextStyle`  | `TextStyle?` | `null` | Custom header text style |
-| `cellTextStyle`    | `TextStyle?` | `null` | Custom cell text style |
-| `searchableFields` | `List<String>?` | All fields | Fields included in search |
-| `rowsPerPage`      | `int?` | `null` | Enables pagination |
-| `searchWidth`      | `double?` | `auto` | Search field width |
-| `tableWidth`       | `double?` | `1200` | Maximum table width |
-| `tableHeight`      | `double?` | `auto` | Fixed table height |
+| `searchBgColor`    | `Color` | `Colors.grey` | Search field background color |
+| `headerTextStyle`  | `TextStyle?` | `null`        | Custom header text style |
+| `cellTextStyle`    | `TextStyle?` | `null`        | Custom cell text style |
+| `searchableFields` | `List<String>?` | All fields    | Fields included in search |
+| `rowsPerPage`      | `int?` | `null`        | Enables pagination |
+| `searchWidth`      | `double?` | `Auto`        | Search field width |
+| `tableWidth`       | `double?` | `1200`        | Maximum table width |
+| `tableHeight`      | `double?` | `null`        | Fixed table height |
 
 ---
 
@@ -158,9 +158,6 @@ DashboardConfig(
 
 - [ ] Column sorting
 - [ ] Row selection
-- [ ] Export to CSV
-- [ ] Custom cell builder
-- [ ] Sticky headers
 
 ---
 
