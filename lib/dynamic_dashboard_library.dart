@@ -1,4 +1,4 @@
-library dynamic_dashboard_library;
+library cgc_dynamic_search;
 
 // Models
 export '/src/models/dashboard_config.dart';

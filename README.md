@@ -34,7 +34,7 @@ dependencies:
 
 Or if using from the same project:
 
-```yaml
+```dart
 import 'package:dynamic_dashboard_library/dynamic_dashboard_library.dart';
 ```
 

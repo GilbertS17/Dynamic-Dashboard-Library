@@ -3,8 +3,8 @@ import 'models/dashboard_config.dart';
 import 'dashboard_data_source.dart';
 import 'dashboard_search.dart';
 
-class DynamicDashboard extends StatefulWidget {
-  final List<Map<String, dynamic>> data;
+class DynamicDashboard<K, V> extends StatefulWidget {
+  final List<Map<K, V>> data;
   final DashboardConfig config;
 
   const DynamicDashboard({
@@ -14,23 +14,23 @@ class DynamicDashboard extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<DynamicDashboard> createState() => _DynamicDashboardState();
+  State<DynamicDashboard<K, V>> createState() => _DynamicDashboardState<K, V>();
 }
 
-class _DynamicDashboardState extends State<DynamicDashboard> {
-  late List<Map<String, dynamic>> filteredData;
-  String searchQuery = "";
+class _DynamicDashboardState<K, V> extends State<DynamicDashboard<K, V>> {
 
-  double getSearchWidth(double width) {
-    if (width > 1200) return 400;
-    if (width > 800) return 300;
-    return width; // full width on mobile
-  }
+  late List<Map<K, V>> filteredData;
+  String searchQuery = "";
 
   @override
   void initState() {
     super.initState();
     filteredData = widget.data;
+  }
+  double getSearchWidth(double width) {
+    if (width > 1200) return 400;
+    if (width > 800) return 300;
+    return width; // full width on mobile
   }
 
   void _filterData(String query) {
@@ -41,8 +41,7 @@ class _DynamicDashboardState extends State<DynamicDashboard> {
         filteredData = widget.data;
       } else {
         filteredData = widget.data.where((row) {
-          final searchableFields =
-              widget.config.searchableFields ?? row.keys.toList();
+          final searchableFields = widget.config.searchableFields?.cast<K>() ?? row.keys.toList();
 
           return searchableFields.any((field) {
             final value = row[field]?.toString().toLowerCase() ?? "";
@@ -59,7 +58,7 @@ class _DynamicDashboardState extends State<DynamicDashboard> {
       return const Center(child: Text("No Data"));
     }
 
-    final columns = widget.data.first.keys.toList();
+    final columns = widget.data.first.keys.toList().cast<K>();
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: widget.config.tableWidth ?? 1200),
@@ -96,8 +95,8 @@ class _DynamicDashboardState extends State<DynamicDashboard> {
     );
   }
 
-  Widget _buildTable(List<String> columns) {
-    final dataSource = DashboardDataSource(
+  Widget _buildTable(List<K> columns) {
+    final dataSource = DashboardDataSource<K, V>(
       data: filteredData,
       columns: columns,
       cellTextStyle: widget.config.cellTextStyle,
@@ -138,7 +137,7 @@ class _DynamicDashboardState extends State<DynamicDashboard> {
                             .map(
                               (col) => DataColumn(
                                 label: Text(
-                                  col,
+                                  col.toString(),
                                   style:
                                       widget.config.headerTextStyle ??
                                       TextStyle(
@@ -168,19 +167,14 @@ class _DynamicDashboardState extends State<DynamicDashboard> {
               // Paginated table
               : Theme(
             data: Theme.of(context).copyWith(
+              cardColor: Colors.white, // 👈 this controls the paginated table's footer/card background
               dataTableTheme: DataTableThemeData(
                 headingRowColor: WidgetStateProperty.resolveWith<Color>(
-                        (Set<WidgetState> states) {
-                      // Set color for heading row
-                      return Colors.white; // example color
-                    }),
+                      (Set<WidgetState> states) => Colors.white,
+                ),
                 dataRowColor: WidgetStateProperty.resolveWith<Color>(
-                        (Set<WidgetState> states) {
-                      // Set color for data rows
-                      return Colors.white; // example color
-                    }),
-
-                // Add other customizations here
+                      (Set<WidgetState> states) => Colors.white,
+                ),
               ),
             ),
                 child: SingleChildScrollView(
@@ -195,7 +189,7 @@ class _DynamicDashboardState extends State<DynamicDashboard> {
                     columns: columns.map((col) =>
                         DataColumn(
                             label: Text(
-                              col,
+                              col.toString(),
                               style:
                                   widget.config.headerTextStyle ??
                                   TextStyle(

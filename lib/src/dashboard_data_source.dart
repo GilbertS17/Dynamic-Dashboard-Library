@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-class DashboardDataSource extends DataTableSource {
-  final List<Map<String, dynamic>> data;
-  final List<String> columns;
+class DashboardDataSource<K, V> extends DataTableSource {
+  final List<Map<K, V>> data;
+  final List<K> columns;
   final TextStyle? cellTextStyle;
 
   DashboardDataSource({
