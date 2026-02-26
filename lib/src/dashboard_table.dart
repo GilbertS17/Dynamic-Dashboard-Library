@@ -6,10 +6,18 @@ import 'dashboard_search.dart';
 class DynamicDashboard<K, V> extends StatefulWidget {
   final List<Map<K, V>> data;
   final DashboardConfig config;
+  final void Function(Map<K, dynamic> row)? onRowSelected;
+  final void Function(Map<K, V> row)? onRowTap;
+  final void Function(Map<K, V> row)? onRowDoubleTap;
+  final void Function(Map<K, V> row)? onRowLongPress;
 
   const DynamicDashboard({
     Key? key,
     required this.data,
+    this.onRowSelected,
+    this.onRowTap,
+    this.onRowDoubleTap,
+    this.onRowLongPress,
     this.config = const DashboardConfig(),
   }) : super(key: key);
 
@@ -202,12 +210,24 @@ class _DynamicDashboardState<K, V> extends State<DynamicDashboard<K, V>> {
                         }).toList(),
                         rows: filteredData.map((row) {
                           return DataRow(
+                            onSelectChanged: widget.onRowSelected != null
+                                ? (selected) { if (selected == true) { widget.onRowSelected!(row); } }
+                                : null,
                             cells: columns.map((col) {
                               return DataCell(
                                 Text(
                                   row[col]?.toString() ?? '',
                                   style: widget.config.cellTextStyle,
                                 ),
+                                onTap: widget.onRowTap != null
+                                    ? () => widget.onRowTap!(row)
+                                    : null,
+                                onDoubleTap: widget.onRowDoubleTap != null
+                                    ? () => widget.onRowDoubleTap!(row)
+                                    : null,
+                                onLongPress: widget.onRowLongPress != null
+                                    ? () => widget.onRowLongPress!(row)
+                                    : null,
                               );
                             }).toList(),
                           );
@@ -251,17 +271,24 @@ class _DynamicDashboardState<K, V> extends State<DynamicDashboard<K, V>> {
                                 ).toList(),
                                 rows: paginatedData.map((row) {
                                   return DataRow(
-                                    // onSelectChanged: (selected) {
-                                    //   if (selected == true) {
-                                    //     Navigator.pop(context, row); // return selected row
-                                    //   }
-                                    // },
+                                    onSelectChanged: widget.onRowSelected != null
+                                      ? (selected) { if (selected == true) { widget.onRowSelected!(row); } }
+                                      : null,
                                     cells: columns.map((col) {
                                       return DataCell(
                                         Text(
                                           row[col]?.toString() ?? '',
                                           style: widget.config.cellTextStyle,
                                         ),
+                                        onTap: widget.onRowTap != null
+                                            ? () => widget.onRowTap!(row)
+                                            : null,
+                                        onDoubleTap: widget.onRowDoubleTap != null
+                                            ? () => widget.onRowDoubleTap!(row)
+                                            : null,
+                                        onLongPress: widget.onRowLongPress != null
+                                            ? () => widget.onRowLongPress!(row)
+                                            : null,
                                       );
                                     }).toList(),
                                   );
