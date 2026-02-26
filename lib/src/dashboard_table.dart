@@ -80,7 +80,10 @@ class _DynamicDashboardState<K, V> extends State<DynamicDashboard<K, V>> {
 
           return searchableFields.any((field) {
             final value = row[field]?.toString().toLowerCase() ?? "";
-            return value.contains(query.toLowerCase());
+
+            final words = query.toLowerCase().split(' ').where((w) => w.isNotEmpty);
+
+            return words.every((word) => value.contains(word));
           });
         }).toList();
       }
