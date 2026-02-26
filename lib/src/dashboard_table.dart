@@ -18,15 +18,49 @@ class DynamicDashboard<K, V> extends StatefulWidget {
 }
 
 class _DynamicDashboardState<K, V> extends State<DynamicDashboard<K, V>> {
-
+  final ScrollController _horizontalScrollController = ScrollController();
   late List<Map<K, V>> filteredData;
   String searchQuery = "";
+  int currentPage = 0;
+  final GlobalKey _tableKey = GlobalKey();
+  double _tableContentWidth = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    filteredData = widget.data;
+  int get rowsPerPage => widget.config.rowsPerPage!;
+
+  int get totalPages {
+    if (filteredData.isEmpty) return 1;
+    return (filteredData.length / rowsPerPage).ceil();
   }
+
+  void _updateTableWidth() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _tableKey.currentContext;
+      if (context != null) {
+        final box = context.findRenderObject() as RenderBox;
+        if (box.size.width != _tableContentWidth) {
+          setState(() {
+            _tableContentWidth = box.size.width;
+          });
+        }
+      }
+    });
+  }
+
+  List<Map<K, V>> get paginatedData {
+    final start = currentPage * rowsPerPage;
+    final end = (start + rowsPerPage) > filteredData.length
+        ? filteredData.length
+        : start + rowsPerPage;
+
+    return filteredData.sublist(start, end);
+  }
+
+  void _goToPage(int page) {
+    setState(() {
+      currentPage = page;
+    });
+  }
+
   double getSearchWidth(double width) {
     if (width > 1200) return 400;
     if (width > 800) return 300;
@@ -36,6 +70,7 @@ class _DynamicDashboardState<K, V> extends State<DynamicDashboard<K, V>> {
   void _filterData(String query) {
     setState(() {
       searchQuery = query;
+      currentPage = 0;
 
       if (query.isEmpty) {
         filteredData = widget.data;
@@ -50,6 +85,19 @@ class _DynamicDashboardState<K, V> extends State<DynamicDashboard<K, V>> {
         }).toList();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _horizontalScrollController.dispose(); // 👈 add this
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    filteredData = widget.data;
+    _updateTableWidth();
   }
 
   @override
@@ -120,34 +168,35 @@ class _DynamicDashboardState<K, V> extends State<DynamicDashboard<K, V>> {
           ),
           child: (widget.config.rowsPerPage == null)
               // Non-paginated table
-              ? SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
+              ? Scrollbar(
+                controller: _horizontalScrollController,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _horizontalScrollController,
+                  scrollDirection: Axis.horizontal,
                   child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+                    scrollDirection: Axis.vertical,
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
                         minWidth: constraints.maxWidth - 32,
                       ),
-                      // match container width minus padding
                       child: DataTable(
+                        key: _tableKey,
                         headingRowColor: MaterialStateProperty.all(
                           widget.config.headerBgColor.withOpacity(0.1),
                         ),
-                        columns: columns
-                            .map(
-                              (col) => DataColumn(
-                                label: Text(
-                                  col.toString(),
-                                  style:
-                                      widget.config.headerTextStyle ??
-                                      TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: widget.config.headerBgColor,
-                                      ),
-                                ),
-                              ),
-                            )
-                            .toList(),
+                        columns: columns.map((col) {
+                          return DataColumn(
+                            label: Text(
+                              col.toString(),
+                              style: widget.config.headerTextStyle ??
+                                  TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: widget.config.headerBgColor,
+                                  ),
+                            ),
+                          );
+                        }).toList(),
                         rows: filteredData.map((row) {
                           return DataRow(
                             cells: columns.map((col) {
@@ -163,47 +212,141 @@ class _DynamicDashboardState<K, V> extends State<DynamicDashboard<K, V>> {
                       ),
                     ),
                   ),
-                )
+                ),
+              )
               // Paginated table
-              : Theme(
-            data: Theme.of(context).copyWith(
-              cardColor: Colors.white, // 👈 this controls the paginated table's footer/card background
-              dataTableTheme: DataTableThemeData(
-                headingRowColor: WidgetStateProperty.resolveWith<Color>(
-                      (Set<WidgetState> states) => Colors.white,
-                ),
-                dataRowColor: WidgetStateProperty.resolveWith<Color>(
-                      (Set<WidgetState> states) => Colors.white,
-                ),
-              ),
-            ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: PaginatedDataTable(
-                              // arrowHeadColor: Colors.white,
-
-                    rowsPerPage: widget.config.rowsPerPage!,
-                    headingRowColor: MaterialStateProperty.all(
-                      widget.config.headerBgColor.withOpacity(0.1),
-                    ),
-                    columns: columns.map((col) =>
-                        DataColumn(
-                            label: Text(
-                              col.toString(),
-                              style:
-                                  widget.config.headerTextStyle ??
-                                  TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: widget.config.headerBgColor,
+              : SizedBox(
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Table
+                    Expanded(
+                      child: Scrollbar(
+                        controller: _horizontalScrollController,
+                        child: SingleChildScrollView(
+                          controller: _horizontalScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.vertical,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: constraints.maxWidth - 32, // minus container padding
+                              ),
+                              child: DataTable(
+                                headingRowColor: MaterialStateProperty.all(
+                                  widget.config.headerBgColor.withOpacity(0.1),
+                                ),
+                                columns: columns.map(
+                                      (col) => DataColumn(
+                                    label: Text(
+                                      col.toString(),
+                                      style: widget.config.headerTextStyle ??
+                                          TextStyle(fontWeight: FontWeight.bold, color: widget.config.headerBgColor),
+                                    ),
                                   ),
+                                ).toList(),
+                                rows: paginatedData.map((row) {
+                                  return DataRow(
+                                    // onSelectChanged: (selected) {
+                                    //   if (selected == true) {
+                                    //     Navigator.pop(context, row); // return selected row
+                                    //   }
+                                    // },
+                                    cells: columns.map((col) {
+                                      return DataCell(
+                                        Text(
+                                          row[col]?.toString() ?? '',
+                                          style: widget.config.cellTextStyle,
+                                        ),
+                                      );
+                                    }).toList(),
+                                  );
+                                }).toList(),
+                              ),
                             ),
                           ),
-                        )
-                        .toList(),
-                    source: dataSource,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+
+                  // Custom Pagination Footer
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Previous Button
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: currentPage > 0 ? () => _goToPage(currentPage - 1) : null,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: currentPage > 0 ? widget.config.headerBgColor : Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.arrow_back_ios_rounded,
+                              size: 16,
+                              color: currentPage > 0 ? Colors.white : Colors.grey.shade500,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 20),
+
+                        // Page Indicator
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6,),
+                          decoration: BoxDecoration(
+                            color: widget.config.headerBgColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Page ${currentPage + 1} of $totalPages',
+                            style: TextStyle(fontWeight: FontWeight.w600, color: widget.config.headerBgColor,),
+                          ),
+                        ),
+
+                        const SizedBox(width: 20),
+
+                        // Next Button
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: currentPage < totalPages - 1 ? () => _goToPage(currentPage + 1) : null,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: currentPage < totalPages - 1 ? widget.config.headerBgColor : Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 16,
+                              color: currentPage < totalPages - 1 ? Colors.white : Colors.grey.shade500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
+            ),
         );
       },
     );
